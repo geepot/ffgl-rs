@@ -43,34 +43,79 @@ fn ensure_submodules_initialized() {
     }
 }
 
-fn main() {
-    println!("cargo:rerun-if-env-changed=BINDGEN_EXTRA_CLANG_ARGS");
-      // Ensure submodules are initialized before proceeding
-    ensure_submodules_initialized();    cfg_if::cfg_if! {
-        if #[cfg(target_os = "macos")] {
-            let mut clang_args_ffgl = vec!["-x", "c++", "-IFFGLSDK/Include"];
-            let mut clang_args_ffgl2 = vec!["-x", "c++", "-Iffgl-resolume/source/lib/ffgl"];
-            
-            let macos_framework_path = macos_get_framework_sdk_path();
-            let extra_clang_args = vec!["-F", &macos_framework_path, "-framework", "OpenGL"];
-
-            clang_args_ffgl.extend(&extra_clang_args);
-            clang_args_ffgl2.extend(&extra_clang_args);        } else if #[cfg(target_os = "windows")] {
-            // Include GLEW headers from ffgl-resolume deps for Windows
-            let clang_args_ffgl = vec!["-x", "c++", "-IFFGLSDK/Include"];
-            let clang_args_ffgl2 = vec![
-                "-x", "c++", 
-                "-Iffgl-resolume/source/lib/ffgl",
-                "-Iffgl-resolume/deps/glew-2.1.0/include"
-            ];
-            
-            println!("cargo:rustc-link-lib=opengl32");
-            // GLEW headers are now available for ffgl-resolume bindings
+/// When cross-compiling to Windows GNU, find mingw-w64 include path (for windows.h).
+fn mingw_include_path() -> Option<String> {
+    if let Ok(p) = env::var("MINGW_INCLUDE_PATH") {
+        return Some(p);
+    }
+    // Homebrew mingw-w64 (Apple Silicon and Intel)
+    let homebrew_paths = [
+        "/opt/homebrew/opt/mingw-w64/toolchain-x86_64/x86_64-w64-mingw32/include",
+        "/usr/local/opt/mingw-w64/toolchain-x86_64/x86_64-w64-mingw32/include",
+    ];
+    for p in &homebrew_paths {
+        if Path::new(p).exists() {
+            return Some((*p).to_string());
         }
     }
+    None
+}
 
-    dbg!(&clang_args_ffgl);
-    dbg!(&clang_args_ffgl2);
+fn main() {
+    println!("cargo:rerun-if-env-changed=BINDGEN_EXTRA_CLANG_ARGS");
+    println!("cargo:rerun-if-env-changed=TARGET");
+    println!("cargo:rerun-if-env-changed=MINGW_INCLUDE_PATH");
+    ensure_submodules_initialized();
+
+    let target = env::var("TARGET").unwrap_or_default();
+    let (clang_args_ffgl, clang_args_ffgl2): (Vec<String>, Vec<String>) = if target.contains("windows") {
+        let mut ffgl = vec![
+            "-x".to_string(),
+            "c++".to_string(),
+            "-IFFGLSDK/Include".to_string(),
+        ];
+        let mut ffgl2 = vec![
+            "-x".to_string(),
+            "c++".to_string(),
+            "-Iffgl-resolume/source/lib/ffgl".to_string(),
+            "-Iffgl-resolume/deps/glew-2.1.0/include".to_string(),
+        ];
+        if let Some(inc) = mingw_include_path() {
+            ffgl.push(format!("-I{}", inc));
+            ffgl2.push(format!("-I{}", inc));
+        }
+        println!("cargo:rustc-link-lib=opengl32");
+        (ffgl, ffgl2)
+    } else if target.contains("darwin") || target.contains("macos") {
+        let macos_framework_path = macos_get_framework_sdk_path();
+        let mut ffgl = vec![
+            "-x".to_string(),
+            "c++".to_string(),
+            "-IFFGLSDK/Include".to_string(),
+            "-F".to_string(),
+            macos_framework_path.clone(),
+            "-framework".to_string(),
+            "OpenGL".to_string(),
+        ];
+        let mut ffgl2 = vec![
+            "-x".to_string(),
+            "c++".to_string(),
+            "-Iffgl-resolume/source/lib/ffgl".to_string(),
+            "-F".to_string(),
+            macos_framework_path,
+            "-framework".to_string(),
+            "OpenGL".to_string(),
+        ];
+        (ffgl, ffgl2)
+    } else {
+        (
+            vec!["-x".into(), "c++".into(), "-IFFGLSDK/Include".into()],
+            vec!["-x".into(), "c++".into(), "-Iffgl-resolume/source/lib/ffgl".into()],
+        )
+    };
+
+    let clang_args_ffgl: Vec<&str> = clang_args_ffgl.iter().map(String::as_str).collect();
+    let clang_args_ffgl2: Vec<&str> = clang_args_ffgl2.iter().map(String::as_str).collect();
 
     let out_dir = PathBuf::from(env::var("OUT_DIR").expect("env variable OUT_DIR not found"));
 
