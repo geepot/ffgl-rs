@@ -1,8 +1,6 @@
-use glium;
-use std;
 use std::sync::Once;
 
-pub(crate) const GL_INIT_ONCE: Once = std::sync::Once::new();
+pub(crate) static GL_INIT_ONCE: Once = Once::new();
 
 #[derive(Debug)]
 pub(crate) struct RawGlBackend {

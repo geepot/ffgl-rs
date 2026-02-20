@@ -1,5 +1,5 @@
 use build_common::isf_glsl_preprocess::validate_isf_source;
-use std::{env, fs, path::Path, process, thread, time::Duration};
+use std::{env, fs, path::Path, process};
 
 fn main() {
     let args: Vec<String> = env::args().collect();

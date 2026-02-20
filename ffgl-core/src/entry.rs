@@ -85,8 +85,10 @@ pub fn default_ffgl_entry<H: FFGLHandler + 'static>(
             INFO_STRUCT_EXTENDED = Some(info::plugin_info_extended(about, description));
         }
         info::plugin_info(
-            unsafe { std::mem::transmute(&info.unique_id) },
-            unsafe { std::mem::transmute(&info.name) },
+            // Safety: [u8; 4] and [i8; 4] have the same layout
+            unsafe { &*(&info.unique_id as *const [u8; 4] as *const [i8; 4]) },
+            // Safety: [u8; 16] and [i8; 16] have the same layout
+            unsafe { &*(&info.name as *const [u8; 16] as *const [i8; 16]) },
             info.ty,
         )
     });
@@ -186,8 +188,7 @@ pub fn default_ffgl_entry<H: FFGLHandler + 'static>(
             let index_usize = index as usize;
 
             //dunno why they store this in a u32, whatever..
-            let new_value =
-                unsafe { std::mem::transmute::<u32, f32>(input.NewParameterValue.UIntValue) };
+            let new_value = f32::from_bits(unsafe { input.NewParameterValue.UIntValue });
 
             instance
                 .context(e!("No instance"))?
@@ -239,7 +240,7 @@ pub fn default_ffgl_entry<H: FFGLHandler + 'static>(
                 .into()
         }
 
-        Op::GetNumElementSeparators => (0 as u32).into(),
+        Op::GetNumElementSeparators => 0u32.into(),
 
         Op::GetInfo => INFO_STRUCT.get().context(e!("No info"))?.into(),
 
@@ -282,7 +283,7 @@ pub fn default_ffgl_entry<H: FFGLHandler + 'static>(
             let handler::Instance { data, renderer } = instance.context(e!("No instance"))?;
             let gl_input = gl_process_info.into();
 
-            renderer.draw(&data, gl_input);
+            renderer.draw(data, gl_input);
 
             SuccessVal::Success.into()
         }

@@ -1,7 +1,7 @@
 //! This module provides a simplified way to implement a plugin
 //! 1. Implement [SimpleFFGLInstance] for your plugin
 //! 2. Call [crate::plugin_main] with a [SimpleFFGLHandler] and your instance type, such as:
-//!     ```rust plugin_main!(SimpleFFGLHandler<MyInstanceType>);```
+//!    ```rust plugin_main!(SimpleFFGLHandler<MyInstanceType>);```
 
 use super::FFGLHandler;
 

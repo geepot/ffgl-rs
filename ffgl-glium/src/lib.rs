@@ -209,8 +209,8 @@ unsafe fn blit_fb((read_w, read_h): (u32, u32), (write_w, write_h): (u32, u32)) 
     };
 
     let target_rect = BlitTarget {
-        left: 0 as u32,
-        bottom: 0 as u32,
+        left: 0,
+        bottom: 0,
         width: write_w as i32,
         height: write_h as i32,
     };

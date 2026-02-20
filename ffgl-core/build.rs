@@ -6,7 +6,7 @@ use std::path::PathBuf;
 /// use xcrun to find the path to the MacOS SDK
 fn macos_get_framework_sdk_path() -> String {
     let output = std::process::Command::new("xcrun")
-        .args(&["--show-sdk-path"])
+        .args(["--show-sdk-path"])
         .output()
         .expect("failed to execute xcrun");
 
@@ -24,7 +24,7 @@ fn ensure_submodules_initialized() {
         
         // Try to initialize submodules
         let output = std::process::Command::new("git")
-            .args(&["submodule", "update", "--init", "--recursive"])
+            .args(["submodule", "update", "--init", "--recursive"])
             .output();
             
         match output {
@@ -70,41 +70,41 @@ fn main() {
     let target = env::var("TARGET").unwrap_or_default();
     let (clang_args_ffgl, clang_args_ffgl2): (Vec<String>, Vec<String>) = if target.contains("windows") {
         let mut ffgl = vec![
-            "-x".to_string(),
-            "c++".to_string(),
-            "-IFFGLSDK/Include".to_string(),
+            "-x".into(),
+            "c++".into(),
+            "-IFFGLSDK/Include".into(),
         ];
-        let mut ffgl2 = vec![
-            "-x".to_string(),
-            "c++".to_string(),
-            "-Iffgl-resolume/source/lib/ffgl".to_string(),
-            "-Iffgl-resolume/deps/glew-2.1.0/include".to_string(),
+        let mut ffgl2: Vec<String> = vec![
+            "-x".into(),
+            "c++".into(),
+            "-Iffgl-resolume/source/lib/ffgl".into(),
+            "-Iffgl-resolume/deps/glew-2.1.0/include".into(),
         ];
         if let Some(inc) = mingw_include_path() {
-            ffgl.push(format!("-I{}", inc));
-            ffgl2.push(format!("-I{}", inc));
+            ffgl.push(format!("-I{inc}"));
+            ffgl2.push(format!("-I{inc}"));
         }
         println!("cargo:rustc-link-lib=opengl32");
         (ffgl, ffgl2)
     } else if target.contains("darwin") || target.contains("macos") {
         let macos_framework_path = macos_get_framework_sdk_path();
-        let mut ffgl = vec![
-            "-x".to_string(),
-            "c++".to_string(),
-            "-IFFGLSDK/Include".to_string(),
-            "-F".to_string(),
+        let ffgl = vec![
+            "-x".into(),
+            "c++".into(),
+            "-IFFGLSDK/Include".into(),
+            "-F".into(),
             macos_framework_path.clone(),
-            "-framework".to_string(),
-            "OpenGL".to_string(),
+            "-framework".into(),
+            "OpenGL".into(),
         ];
-        let mut ffgl2 = vec![
-            "-x".to_string(),
-            "c++".to_string(),
-            "-Iffgl-resolume/source/lib/ffgl".to_string(),
-            "-F".to_string(),
+        let ffgl2 = vec![
+            "-x".into(),
+            "c++".into(),
+            "-Iffgl-resolume/source/lib/ffgl".into(),
+            "-F".into(),
             macos_framework_path,
-            "-framework".to_string(),
-            "OpenGL".to_string(),
+            "-framework".into(),
+            "OpenGL".into(),
         ];
         (ffgl, ffgl2)
     } else {
