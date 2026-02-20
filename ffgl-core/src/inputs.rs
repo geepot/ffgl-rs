@@ -11,16 +11,16 @@ pub struct GLInput<'a> {
     pub host: u32,
 }
 
-impl<'a> Into<GLInput<'a>> for &'a ProcessOpenGLStruct {
-    fn into(self) -> GLInput<'a> {
+impl<'a> From<&'a ProcessOpenGLStruct> for GLInput<'a> {
+    fn from(val: &'a ProcessOpenGLStruct) -> GLInput<'a> {
         GLInput {
             textures: unsafe {
                 std::slice::from_raw_parts(
-                    *self.inputTextures as *const _,
-                    self.numInputTextures as usize,
+                    *val.inputTextures as *const _,
+                    val.numInputTextures as usize,
                 )
             },
-            host: self.HostFBO,
+            host: val.HostFBO,
         }
     }
 }
@@ -39,7 +39,7 @@ impl FFGLData {
     pub fn new(viewport: &FFGLViewportStruct) -> FFGLData {
         Self {
             created_at: Instant::now(),
-            viewport: viewport.clone(),
+            viewport: *viewport,
             host_time: SystemTime::now(),
             host_beat: SetBeatinfoStruct {
                 bpm: 120.0,

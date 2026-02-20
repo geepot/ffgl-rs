@@ -153,8 +153,7 @@ impl ParamInfo for SimpleParamInfo {
 
     fn display_name(&self) -> &str {
         self.display_name
-            .as_ref()
-            .map(String::as_str)
+            .as_deref()
             .unwrap_or(self.name.to_str().expect("Invalid UTF-8 in parameter name"))
     }
 
@@ -195,6 +194,6 @@ impl ParamInfo for SimpleParamInfo {
     }
 
     fn num_elements(&self) -> usize {
-        self.elements.as_ref().map(|x| x.len()).unwrap_or(1)
+        self.elements.as_ref().map_or(1, |x| x.len())
     }
 }

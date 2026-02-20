@@ -17,6 +17,9 @@ pub const TEXTURE_TYPES: [TextureType; 2] = [
     // Add other texture types here...
 ];
 
+/// # Safety
+///
+/// Must be called with a valid OpenGL context active and `frame_data` must point to valid host data.
 pub unsafe fn gl_reset(frame_data: &ffgl_core::ffi::ffgl2::ProcessOpenGLStructTag) {
     let mut gl_int = 0;
     gl::UseProgram(0);
@@ -49,6 +52,9 @@ pub unsafe fn gl_reset(frame_data: &ffgl_core::ffi::ffgl2::ProcessOpenGLStructTa
     gl::BindFramebuffer(gl::FRAMEBUFFER, frame_data.HostFBO);
 }
 
+/// # Safety
+///
+/// Must be called with a valid OpenGL context active.
 pub unsafe fn validate_viewport(viewport: &[i32; 4]) {
     let scissor_enabled = gl::IsEnabled(gl::SCISSOR_TEST);
     assert_eq!(scissor_enabled, gl::FALSE, "SCISSOR_TEST is enabled");

@@ -5,43 +5,37 @@ use glsl::syntax::{Expr, FunIdentifier, Identifier, ShaderStage};
 use glsl::visitor::{HostMut, VisitorMut};
 use isf;
 
-const STANDARD_PREFIX: &'static str = include_str!("isf_prefix.glsl");
-const PREFIX_120: &'static str = include_str!("isf_prefix_120.glsl");
-const PREFIX_140: &'static str = include_str!("isf_prefix_140.glsl");
+const STANDARD_PREFIX: &str = include_str!("isf_prefix.glsl");
+const PREFIX_120: &str = include_str!("isf_prefix_120.glsl");
+const PREFIX_140: &str = include_str!("isf_prefix_140.glsl");
 
 use isf::Isf;
 
-use crate::{translation_unit_to_string, DisplayResult, GlslVersion};
+use crate::{translation_unit_to_string, GlslVersion};
 
 struct UniformTextureSizeMutator;
 
 impl VisitorMut for UniformTextureSizeMutator {
     fn visit_expr(&mut self, e: &mut glsl::syntax::Expr) -> glsl::visitor::Visit {
-        match e {
-            Expr::FunCall(FunIdentifier::Identifier(Identifier(ident)), exprs) => {
-                if ident == "IMG_PIXEL" {
-                    // panic!("IMG_PIXEL");
-                    *ident = "texture".to_string();
+        if let Expr::FunCall(FunIdentifier::Identifier(Identifier(ident)), exprs) = e {
+            if ident == "IMG_PIXEL" {
+                *ident = "texture".to_string();
 
-                    let sampler_name = match exprs.first().expect("No name in IMG_PIXEL") {
-                        Expr::Variable(v) => v.0.clone(),
-                        _ => unreachable!("First argument to IMG_PIXEL is not a variable"),
-                    };
+                let sampler_name = match exprs.first().expect("No name in IMG_PIXEL") {
+                    Expr::Variable(v) => v.0.clone(),
+                    _ => unreachable!("First argument to IMG_PIXEL is not a variable"),
+                };
 
-                    let last = exprs.last_mut().expect("No last expr");
+                let last = exprs.last_mut().expect("No last expr");
 
-                    match last {
-                        Expr::Variable(Identifier(coord_ident)) => {
-                            *last =
-                                Expr::parse(format!("{coord_ident}/{sampler_name}_size")).unwrap();
-                        }
-                        _ => panic!("Last expr is not a variable"),
+                match last {
+                    Expr::Variable(Identifier(coord_ident)) => {
+                        *last =
+                            Expr::parse(format!("{coord_ident}/{sampler_name}_size")).unwrap();
                     }
-
-                    // panic!("EXPR: {:?}", e);
+                    _ => panic!("Last expr is not a variable"),
                 }
             }
-            _ => {}
         }
 
         glsl::visitor::Visit::Children

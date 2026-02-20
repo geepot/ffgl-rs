@@ -67,16 +67,16 @@ pub enum Op {
 
 impl Op {
     pub fn is_noisy(&self) -> bool {
-        match self {
+        matches!(
+            self,
             Op::ProcessOpenGL
-            | Op::SetBeatInfo
-            | Op::SetTime
-            | Op::GetParameterEvents
-            | Op::SetParameter
-            | Op::GetParameterDisplay
-            | Op::GetParameterType => true,
-            _ => false,
-        }
+                | Op::SetBeatInfo
+                | Op::SetTime
+                | Op::GetParameterEvents
+                | Op::SetParameter
+                | Op::GetParameterDisplay
+                | Op::GetParameterType
+        )
     }
 }
 
@@ -159,7 +159,7 @@ impl<T> From<&'static T> for FFGLVal {
 impl From<f32> for FFGLVal {
     fn from(a: f32) -> Self {
         Self {
-            num: unsafe { std::mem::transmute(a) },
+            num: a.to_bits(),
         }
     }
 }
@@ -199,27 +199,35 @@ impl FFGLVal {
         }
     }
 
+    /// # Safety
+    ///
+    /// The caller must ensure that `self.ptr` is a valid pointer to a `T` and that the
+    /// resulting reference's lifetime is appropriate.
     pub unsafe fn as_ref<T>(&self) -> &T {
         &*(self.ptr as *const T)
     }
 
+    /// # Safety
+    ///
+    /// The caller must ensure that `self.ptr` is a valid pointer to a `T`, that no other
+    /// references to the same data exist, and that the resulting reference's lifetime is appropriate.
     pub unsafe fn as_mut<T>(&mut self) -> &mut T {
         &mut *(self.ptr as *mut T)
     }
 }
 
-impl Into<FFGLVal> for SuccessVal {
-    fn into(self) -> FFGLVal {
-        FFGLVal { num: self as u32 }
+impl From<SuccessVal> for FFGLVal {
+    fn from(val: SuccessVal) -> FFGLVal {
+        FFGLVal { num: val as u32 }
     }
 }
-impl Into<FFGLVal> for BoolVal {
-    fn into(self) -> FFGLVal {
-        FFGLVal { num: self as u32 }
+impl From<BoolVal> for FFGLVal {
+    fn from(val: BoolVal) -> FFGLVal {
+        FFGLVal { num: val as u32 }
     }
 }
-impl Into<FFGLVal> for SupportVal {
-    fn into(self) -> FFGLVal {
-        FFGLVal { num: self as u32 }
+impl From<SupportVal> for FFGLVal {
+    fn from(val: SupportVal) -> FFGLVal {
+        FFGLVal { num: val as u32 }
     }
 }

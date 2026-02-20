@@ -18,11 +18,15 @@ macro_rules! plugin_main {
                 <$handler as $crate::handler::FFGLHandler>::Instance,
             >,
         ) -> $crate::conversions::FFGLVal {
-            $crate::plugin_main::handle_plugin_main::<$handler>(
-                functionCode,
-                inputValue,
-                instanceID,
-            )
+            // Safety: instanceID is provided by the FFGL host and is either null or a valid
+            // pointer previously returned by InstantiateGL.
+            unsafe {
+                $crate::plugin_main::handle_plugin_main::<$handler>(
+                    functionCode,
+                    inputValue,
+                    instanceID,
+                )
+            }
         }
 
         #[no_mangle]
@@ -33,7 +37,11 @@ macro_rules! plugin_main {
     };
 }
 
-pub fn handle_plugin_main<H: FFGLHandler + 'static>(
+/// # Safety
+///
+/// `instance_id` must be either null or a valid pointer to an `Instance<H::Instance>` that was
+/// previously returned by `InstantiateGL`.
+pub unsafe fn handle_plugin_main<H: FFGLHandler + 'static>(
     function_code: u32,
     input_value: FFGLVal,
     instance_id: *mut handler::Instance<H::Instance>,

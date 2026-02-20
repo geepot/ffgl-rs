@@ -10,7 +10,7 @@ pub enum OverlayParams {
 
 impl ParamInfo for OverlayParams {
     fn name(&self) -> &CStr {
-        &CStr::from_bytes_with_nul(match self {
+        CStr::from_bytes_with_nul(match self {
             Self::Scale => b"Resize\0",
         })
         .unwrap()

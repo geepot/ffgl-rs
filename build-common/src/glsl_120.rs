@@ -26,9 +26,8 @@ impl VisitorMut for Glsl120Mutator {
     ) -> glsl::visitor::Visit {
         //remove precision declarations
         *t = TranslationUnit(
-            NonEmpty::from_non_empty_iter(t.clone().into_iter().filter(|d| match d {
-                glsl::syntax::ExternalDeclaration::Declaration(Declaration::Precision(..)) => false,
-                _ => true,
+            NonEmpty::from_non_empty_iter(t.clone().into_iter().filter(|d| {
+                !matches!(d, glsl::syntax::ExternalDeclaration::Declaration(Declaration::Precision(..)))
             }))
             .expect("No declarations left after filtering"),
         );
@@ -37,11 +36,10 @@ impl VisitorMut for Glsl120Mutator {
     }
 
     fn visit_expr(&mut self, e: &mut glsl::syntax::Expr) -> glsl::visitor::Visit {
-        match e {
-            Expr::FunCall(FunIdentifier::Identifier(Identifier(f)), _) if f == "texture" => {
+        if let Expr::FunCall(FunIdentifier::Identifier(Identifier(f)), _) = e {
+            if f == "texture" {
                 *f = "texture2D".to_string();
             }
-            _ => {}
         }
 
         glsl::visitor::Visit::Children
