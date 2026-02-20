@@ -26,10 +26,17 @@ pub mod glsl;
 pub mod texture;
 pub mod validate_gl;
 
+/// Cached render buffer to avoid per-frame GL allocations.
+struct CachedRenderBuffer {
+    rb: RenderBuffer,
+    dims: (u32, u32),
+}
+
 ///Use this struct to render frames with a glium context, making assumptions about the OpenGL context inside an FFGL host.
 pub struct FFGLGlium {
     pub ctx: Rc<Context>,
     backend: Rc<gl_backend::RawGlBackend>,
+    cached_rb: Option<CachedRenderBuffer>,
 }
 
 impl Debug for FFGLGlium {
@@ -61,11 +68,11 @@ impl FFGLGlium {
 
         tracing::debug!("OPENGL_VERSION {}", ctx.get_opengl_version_string());
 
-        Self { ctx, backend }
+        Self { ctx, backend, cached_rb: None }
     }
 
     pub fn draw(
-        &self,
+        &mut self,
         render_res: (u32, u32),
         out_res: (u32, u32),
         frame_data: GLInput<'_>,
@@ -76,25 +83,21 @@ impl FFGLGlium {
             // make glium think it's drawing to the default framebuffer
         };
 
-        let rb = RenderBuffer::new(
-            &self.ctx,
-            glium::texture::UncompressedFloatFormat::U8U8U8U8,
-            render_res.0,
-            render_res.1,
-        )
-        .expect("RenderBuffer could not be created");
+        // Cache the render buffer — only recreate when dimensions change
+        if self.cached_rb.as_ref().map(|c| c.dims) != Some(render_res) {
+            let rb = RenderBuffer::new(
+                &self.ctx,
+                glium::texture::UncompressedFloatFormat::U8U8U8U8,
+                render_res.0,
+                render_res.1,
+            )
+            .expect("RenderBuffer could not be created");
+            self.cached_rb = Some(CachedRenderBuffer { rb, dims: render_res });
+        }
 
-        // // let tx = Texture2d::empty_with_format(
-        // //     &self.ctx,
-        // //     glium::texture::UncompressedFloatFormat::U8U8U8U8,
-        // //     glium::texture::MipmapsOption::NoMipmap,
-        // //     render_res.0,
-        // //     render_res.1,
-        // // )
-        // // .expect("Texture2d could not be created");
-
+        let rb = &self.cached_rb.as_ref().unwrap().rb;
         let mut fb =
-            SimpleFrameBuffer::new(&self.ctx, &rb).expect("SimpleFrameBuffer could not be created");
+            SimpleFrameBuffer::new(&self.ctx, rb).expect("SimpleFrameBuffer could not be created");
 
         // fb.clear_color(0.0, 0.0, 0.0, 0.0);
         // let x = SimpleFrameBuffer::
