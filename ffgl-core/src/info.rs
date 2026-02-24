@@ -93,8 +93,8 @@ pub const fn plugin_info_extended(
     PluginExtendedInfoStruct {
         PluginMajorVersion: 0,
         PluginMinorVersion: 0,
-        Description: about.as_ptr().cast_mut().cast(),
-        About: description.as_ptr().cast_mut().cast(),
+        Description: description.as_ptr().cast_mut().cast(),
+        About: about.as_ptr().cast_mut().cast(),
         FreeFrameExtendedDataSize: 0,
         FreeFrameExtendedDataBlock: std::ptr::null::<c_void>() as *mut c_void,
     }

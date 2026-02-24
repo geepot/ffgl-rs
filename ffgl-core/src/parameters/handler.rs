@@ -25,7 +25,8 @@ where
             }
             index -= p.num_params();
         }
-        panic!("Index out of bounds");
+        tracing::warn!("get_param: index out of bounds");
+        0.0
     }
 
     fn set_param(&mut self, index: usize, value: f32) {
@@ -37,7 +38,7 @@ where
             }
             index -= p.num_params();
         }
-        panic!("Index out of bounds");
+        tracing::warn!("set_param: index out of bounds");
     }
 }
 
@@ -57,7 +58,7 @@ where
             }
             index -= p.num_params();
         }
-        panic!("Index out of bounds");
+        panic!("param_info: index {index} out of bounds (host sent invalid parameter index)");
     }
 }
 

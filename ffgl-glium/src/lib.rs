@@ -16,7 +16,7 @@ use ffgl_core::*;
 use glium::{
     backend::Context,
     framebuffer::{RenderBuffer, SimpleFrameBuffer},
-    BlitTarget, CapabilitiesSource, Frame, Surface, Texture2d,
+    CapabilitiesSource, Frame, Surface, Texture2d,
 };
 use std::fmt::Debug;
 use tracing::trace;
@@ -80,7 +80,6 @@ impl FFGLGlium {
     ) {
         unsafe {
             self.ctx.rebuild(self.backend.clone()).unwrap();
-            // make glium think it's drawing to the default framebuffer
         };
 
         // Cache the render buffer — only recreate when dimensions change
@@ -98,9 +97,6 @@ impl FFGLGlium {
         let rb = &self.cached_rb.as_ref().unwrap().rb;
         let mut fb =
             SimpleFrameBuffer::new(&self.ctx, rb).expect("SimpleFrameBuffer could not be created");
-
-        // fb.clear_color(0.0, 0.0, 0.0, 0.0);
-        // let x = SimpleFrameBuffer::
 
         let textures: Vec<_> = frame_data
             .textures
@@ -124,107 +120,38 @@ impl FFGLGlium {
             tracing::error!("Render ERROR: {err:?}");
         }
 
-        // frame.clear_color(0.0, 0.0, 0.0, 0.0);
-        // self.set_default_db_to_ffgl_fb(&frame_data);
-
-        // let empty = EmptyFrameBuffer::new(&self.ctx, render_res.0, render_res.1, None, None, false);
-
-        //puts the texture into the framebuffer
-        // let id = fb.get_id();
-        // let id = rb.get_id();
-
-        // trace!("")
         trace!(?out_res, ?render_res, "RENDERED");
-        // frame.clear_color(0.0, 0.0, 0.0, 0.0);
-
-        //tell glium to draw to the default framebuffer
-        // fb.fill(&frame, glium::uniforms::MagnifySamplerFilter::Nearest);
-
-        // let blit_target_size = output_res;
-
-        // debug!("BLITTING {render_res:?} -> {blit_target_size:?}");
 
         let frame = Frame::new(self.ctx.clone(), out_res);
         fb.fill(&frame, glium::uniforms::MagnifySamplerFilter::Nearest);
 
         unsafe {
             gl::BindFramebuffer(gl::DRAW_FRAMEBUFFER, frame_data.host);
-
             blit_fb(render_res, out_res);
-
             self.ctx.rebuild(self.backend.clone()).unwrap();
-            // make glium think it's drawing to the default framebuffer
         };
 
         frame.finish().unwrap();
-
-        // unsafe {
-        //     // gl::BindFramebuffer(gl::READ_FRAMEBUFFER, 0);
-        //     gl::BindFramebuffer(gl::DRAW_FRAMEBUFFER, frame_data.host);
-        //     blit_fb(render_res, blit_target_size);
-        // }
-
-        //reset to what host expects
-        // gl_reset(frame_data);
-        // validate::validate_context_state();
-
-        // validate_viewport(&viewport);
     }
 
-    // use this before a draw call to make glium think it's drawing to the default framebuffer
     pub fn set_default_db_to_ffgl_fb(&self, frame_data: &GLInput<'_>) {
         self.ctx.swap_buffers().expect("swap_buffers failed");
-        // actually draw to frame_data.host
         unsafe {
-            // gl::Clear(gl::COLOR_BUFFER_BIT);
             gl::BindFramebuffer(gl::DRAW_FRAMEBUFFER, frame_data.host);
         }
     }
 }
 
-// Swaps the buffers between the default and the given id
-// unsafe fn swap_buffers(id: i32) {
-//     gl::BindFramebuffer(gl::READ_FRAMEBUFFER, id);
-//     gl::BindFramebuffer(gl::DRAW_FRAMEBUFFER, 0);
-//     gl::BlitFramebuffer(
-//         0,
-//         0,
-//         1920,
-//         1080,
-//         0,
-//         0,
-//         1920,
-//         1080,
-//         gl::COLOR_BUFFER_BIT,
-//         gl::NEAREST,
-//     );
-// }
-
 unsafe fn blit_fb((read_w, read_h): (u32, u32), (write_w, write_h): (u32, u32)) {
-    let src_rect = BlitTarget {
-        left: 0,
-        bottom: 0,
-        width: read_w as i32,
-        height: read_h as i32,
-    };
-
-    let target_rect = BlitTarget {
-        left: 0,
-        bottom: 0,
-        width: write_w as i32,
-        height: write_h as i32,
-    };
-
-    // https://registry.khronos.org/OpenGL-Refpages/es3.0/html/glBlitFramebuffer.xhtml#:~:text=glBlitFramebuffer%20transfers%20a%20rectangle%20of,GL_COLOR_BUFFER_BIT%20%2C%20GL_DEPTH_BUFFER_BIT%20%2C%20and%20GL_STENCIL_BUFFER_BIT%20.
     gl::BlitFramebuffer(
-        src_rect.left as gl::types::GLint,
-        src_rect.bottom as gl::types::GLint,
-        (src_rect.left as i32 + src_rect.width) as gl::types::GLint,
-        (src_rect.bottom as i32 + src_rect.height) as gl::types::GLint,
-        (target_rect.left) as gl::types::GLint,
-        (target_rect.bottom) as gl::types::GLint,
-        (target_rect.left as i32 + target_rect.width) as gl::types::GLint,
-        (target_rect.bottom as i32 + target_rect.height) as gl::types::GLint,
+        0,
+        0,
+        read_w as gl::types::GLint,
+        read_h as gl::types::GLint,
+        0,
+        0,
+        write_w as gl::types::GLint,
+        write_h as gl::types::GLint,
         gl::COLOR_BUFFER_BIT,
         gl::NEAREST,
     );

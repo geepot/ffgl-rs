@@ -179,7 +179,10 @@ impl ParamInfo for SimpleParamInfo {
 
     fn element_name(&self, index: usize) -> &CStr {
         if let Some(elements) = &self.elements {
-            &elements[index].0
+            elements
+                .get(index)
+                .map(|(name, _)| name.as_c_str())
+                .unwrap_or(self.name())
         } else {
             self.name()
         }
@@ -187,7 +190,10 @@ impl ParamInfo for SimpleParamInfo {
 
     fn element_value(&self, index: usize) -> f32 {
         if let Some(elements) = &self.elements {
-            elements[index].1
+            elements
+                .get(index)
+                .map(|(_, val)| *val)
+                .unwrap_or(self.default_val())
         } else {
             self.default_val()
         }
