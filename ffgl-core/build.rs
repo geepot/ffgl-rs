@@ -119,11 +119,12 @@ fn main() {
 
     let out_dir = PathBuf::from(env::var("OUT_DIR").expect("env variable OUT_DIR not found"));
 
-    // Generate the bindings.
+    // Generate the bindings (raw_line suppresses clippy lints in generated code).
     build_to_out_file(
         bindgen::Builder::default()
             .clang_args(&clang_args_ffgl)
             .header("wrapper.h")
+            .raw_line("#![allow(clippy::unnecessary_transmute)]")
             .generate()
             .unwrap(),
         &out_dir.join("ffgl1.rs"),
@@ -133,6 +134,7 @@ fn main() {
         bindgen::Builder::default()
             .clang_args(&clang_args_ffgl2)
             .header("wrapper.h")
+            .raw_line("#![allow(clippy::unnecessary_transmute)]")
             .generate()
             .unwrap(),
         &out_dir.join("ffgl2.rs"),
