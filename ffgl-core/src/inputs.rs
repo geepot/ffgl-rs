@@ -52,8 +52,8 @@ impl FFGLData {
         self.host_beat = beat;
     }
 
-    pub fn set_time(&mut self, host_seconds: f64) {
-        self.host_time = UNIX_EPOCH + Duration::from_secs_f64(host_seconds / 1000.0)
+    pub fn set_time(&mut self, host_millis: f64) {
+        self.host_time = UNIX_EPOCH + Duration::from_secs_f64(host_millis / 1000.0)
     }
 
     pub fn get_dimensions(&self) -> (u32, u32) {

@@ -21,7 +21,6 @@ pub const TEXTURE_TYPES: [TextureType; 2] = [
 ///
 /// Must be called with a valid OpenGL context active and `frame_data` must point to valid host data.
 pub unsafe fn gl_reset(frame_data: &ffgl_core::ffi::ffgl2::ProcessOpenGLStructTag) {
-    let mut gl_int = 0;
     gl::UseProgram(0);
 
     let mut num_samplers = 0;
@@ -30,9 +29,7 @@ pub unsafe fn gl_reset(frame_data: &ffgl_core::ffi::ffgl2::ProcessOpenGLStructTa
     for texture_type in TEXTURE_TYPES.iter() {
         for sampler in 0..num_samplers {
             gl::ActiveTexture(gl::TEXTURE0 + sampler as u32);
-            // Check if textures are unbound for the current texture unit.
-            gl::GetIntegerv(texture_type.binding, &mut gl_int);
-            // gl::BindTexture(texture_type.target, 0);
+            gl::BindTexture(texture_type.target, 0);
         }
     }
 
