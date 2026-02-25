@@ -3,5 +3,6 @@
 #![allow(non_snake_case)]
 #![allow(unused)]
 #![allow(clashing_extern_declarations)]
+#![allow(unnecessary_transmutes)]
 #![allow(clippy::all)]
 include!(concat!(env!("OUT_DIR"), "/ffgl1.rs"));
