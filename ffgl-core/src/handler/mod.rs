@@ -34,6 +34,12 @@ pub trait FFGLInstance {
 
     ///Called by [crate::conversions::Op::ProcessOpenGL] to draw the plugin
     fn draw(&mut self, inst_data: &FFGLData, frame_data: GLInput);
+
+    /// Consume pending parameter events. Returns (param_index, event_flags) pairs.
+    /// Called by the host via GetParameterEvents. Default: no events.
+    fn consume_param_events(&mut self, _max_events: usize) -> Vec<(u32, u64)> {
+        vec![]
+    }
 }
 
 ///This type is created once per plugin load.
