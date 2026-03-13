@@ -16,17 +16,17 @@ fn macos_get_framework_sdk_path() -> String {
 
 fn ensure_submodules_initialized() {
     // Check if submodules are initialized by looking for key files
-    let ffglsdk_header = Path::new("FFGLSDK/Include/FFGL.h");
+    // Note: FFGLSDK headers are vendored directly (not a submodule), only ffgl-resolume is a submodule
     let resolume_header = Path::new("ffgl-resolume/source/lib/ffgl/FFGL.h");
-    
-    if !ffglsdk_header.exists() || !resolume_header.exists() {
+
+    if !resolume_header.exists() {
         println!("cargo:warning=Git submodules not initialized, attempting to initialize...");
-        
+
         // Try to initialize submodules
         let output = std::process::Command::new("git")
             .args(["submodule", "update", "--init", "--recursive"])
             .output();
-            
+
         match output {
             Ok(result) => {
                 if !result.status.success() {
@@ -65,6 +65,11 @@ fn main() {
     println!("cargo:rerun-if-env-changed=BINDGEN_EXTRA_CLANG_ARGS");
     println!("cargo:rerun-if-env-changed=TARGET");
     println!("cargo:rerun-if-env-changed=MINGW_INCLUDE_PATH");
+    println!("cargo:rerun-if-changed=wrapper.h");
+    println!("cargo:rerun-if-changed=FFGLSDK/Include/FFGL.h");
+    println!("cargo:rerun-if-changed=FFGLSDK/Include/FreeFrame.h");
+    println!("cargo:rerun-if-changed=ffgl-resolume/source/lib/ffgl/FFGL.h");
+    println!("cargo:rerun-if-changed=ffgl-resolume/source/lib/ffgl/FreeFrame.h");
     ensure_submodules_initialized();
 
     let target = env::var("TARGET").unwrap_or_default();

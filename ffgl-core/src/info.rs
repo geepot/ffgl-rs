@@ -19,29 +19,28 @@ pub enum PluginType {
     Mixer = FF_MIXER,
 }
 
-#[derive(PartialEq)]
+#[derive(Debug, Clone, PartialEq, Default)]
 pub enum FFGLVersion {
-    // V1_5,
+    V1_6,
+    #[default]
     V2_1,
 }
 
 impl FFGLVersion {
     pub const fn major(&self) -> u32 {
         match self {
-            // FFGLVersion::V1_5 => 1,
+            FFGLVersion::V1_6 => 1,
             FFGLVersion::V2_1 => 2,
         }
     }
 
     pub const fn minor(&self) -> u32 {
         match self {
-            // FFGLVersion::V1_5 => 5,
+            FFGLVersion::V1_6 => 6,
             FFGLVersion::V2_1 => 1,
         }
     }
 }
-
-pub(crate) const FFGL_VERSION_RESOLUME: FFGLVersion = FFGLVersion::V2_1;
 
 #[derive(Debug, Clone, Default)]
 pub struct PluginInfo {
@@ -50,6 +49,7 @@ pub struct PluginInfo {
     pub ty: PluginType,
     pub about: String,
     pub description: String,
+    pub api_version: FFGLVersion,
 }
 
 impl PluginInfo {
@@ -76,10 +76,11 @@ pub fn plugin_info(
     unique_id: &[i8; 4],
     name: &[i8; 16],
     plugin_type: PluginType,
+    api_version: &FFGLVersion,
 ) -> PluginInfoStruct {
     PluginInfoStruct {
-        APIMajorVersion: FFGL_VERSION_RESOLUME.major(),
-        APIMinorVersion: FFGL_VERSION_RESOLUME.minor(),
+        APIMajorVersion: api_version.major(),
+        APIMinorVersion: api_version.minor(),
         PluginUniqueID: *unique_id,
         PluginName: *name,
         PluginType: plugin_type.to_u32().unwrap(),

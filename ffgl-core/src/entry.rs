@@ -90,41 +90,55 @@ pub fn default_ffgl_entry<H: FFGLHandler + 'static>(
             // Safety: [u8; 16] and [i8; 16] have the same layout
             unsafe { &*(&info.name as *const [u8; 16] as *const [i8; 16]) },
             info.ty,
+            &info.api_version,
         )
     });
 
     let resp = match function {
         Op::GetPluginCaps => {
             let cap_num = unsafe { input_value.num };
-            let cap = num::FromPrimitive::from_u32(cap_num).expect("Unexpected cap n{cap_num}");
 
-            let result = match cap {
-                PluginCapacity::MinInputFrames => FFGLVal { num: 0 },
-                PluginCapacity::MaxInputFrames => FFGLVal { num: 1 },
+            let result = match num::FromPrimitive::from_u32(cap_num) {
+                Some(PluginCapacity::MinInputFrames) => FFGLVal { num: 0 },
+                Some(PluginCapacity::MaxInputFrames) => FFGLVal { num: 1 },
 
-                PluginCapacity::ProcessOpenGl => SupportVal::Supported.into(),
-                PluginCapacity::SetTime => SupportVal::Supported.into(),
+                Some(PluginCapacity::ProcessOpenGl) => SupportVal::Supported.into(),
+                Some(PluginCapacity::SetTime) => SupportVal::Supported.into(),
 
-                PluginCapacity::TopLeftTextureOrientation => SupportVal::Supported.into(),
+                Some(PluginCapacity::TopLeftTextureOrientation) => {
+                    if info.api_version == info::FFGLVersion::V2_1 {
+                        SupportVal::Supported.into()
+                    } else {
+                        SupportVal::Unsupported.into()
+                    }
+                }
 
-                _ => SupportVal::Unsupported.into(),
+                Some(_) => SupportVal::Unsupported.into(),
+                None => {
+                    debug!("Unknown capability {cap_num}");
+                    SupportVal::Unsupported.into()
+                }
             };
 
-            debug!(r = unsafe { result.num }, "{cap:?}");
+            debug!(r = unsafe { result.num }, "cap={cap_num}");
 
             result
         }
 
         Op::EnablePluginCap => {
             let cap_num = unsafe { input_value.num };
-            let cap = num::FromPrimitive::from_u32(cap_num).expect("Unexpected cap n{cap_num}");
 
-            let result: FFGLVal = match cap {
-                PluginCapacity::TopLeftTextureOrientation => SuccessVal::Success.into(),
-                _ => SuccessVal::Fail.into(),
-            };
+            let result: FFGLVal =
+                match num::FromPrimitive::from_u32(cap_num) {
+                    Some(PluginCapacity::TopLeftTextureOrientation)
+                        if info.api_version == info::FFGLVersion::V2_1 =>
+                    {
+                        SuccessVal::Success.into()
+                    }
+                    _ => SuccessVal::Fail.into(),
+                };
 
-            debug!(r = unsafe { result.num }, "{cap:?}");
+            debug!(r = unsafe { result.num }, "cap={cap_num}");
 
             result
         }
