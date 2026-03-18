@@ -124,12 +124,18 @@ fn main() {
 
     let out_dir = PathBuf::from(env::var("OUT_DIR").expect("env variable OUT_DIR not found"));
 
+    // Disable layout tests for 32-bit Windows: some transitive windows.h structs
+    // have different sizes on i686 vs x86_64, causing bindgen's size assertions to
+    // overflow. This is a known bindgen issue (rust-lang/rust-bindgen#1823).
+    let enable_layout_tests = !(target.contains("windows") && target.contains("i686"));
+
     // Generate the bindings. Clippy lints are suppressed by #![allow(clippy::all)]
     // in the wrapper modules (src/ffi/ffgl1.rs, src/ffi/ffgl2.rs).
     build_to_out_file(
         bindgen::Builder::default()
             .clang_args(&clang_args_ffgl)
             .header("wrapper.h")
+            .layout_tests(enable_layout_tests)
             .generate()
             .unwrap(),
         &out_dir.join("ffgl1.rs"),
@@ -139,6 +145,7 @@ fn main() {
         bindgen::Builder::default()
             .clang_args(&clang_args_ffgl2)
             .header("wrapper.h")
+            .layout_tests(enable_layout_tests)
             .generate()
             .unwrap(),
         &out_dir.join("ffgl2.rs"),
