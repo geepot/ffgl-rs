@@ -42,6 +42,7 @@ pub enum Op {
     InitialiseV2 = FF_INITIALISE_V2,
 
     GetNumParameterElements = FF_GET_NUM_PARAMETER_ELEMENTS,
+    GetParameterUsage = FF_GET_PARAMETER_USAGE,
     GetParameterElementName = FF_GET_PARAMETER_ELEMENT_NAME,
     GetParameterElementValue = FF_GET_PARAMETER_ELEMENT_VALUE,
     SetParameterElementValue = FF_SET_PARAMETER_ELEMENT_VALUE,
@@ -56,6 +57,10 @@ pub enum Op {
 
     GetParameterEvents = FF_GET_PARAMETER_EVENTS,
     GetNumElementSeparators = FF_GET_NUM_ELEMENT_SEPARATORS,
+    GetSeparatorElementIndex = FF_GET_SEPARATOR_ELEMENT_INDEX,
+
+    GetNumFileParameterExtensions = FF_GET_NUM_FILE_PARAMETER_EXTENSIONS,
+    GetFileParameterExtension = FF_GET_FILE_PARAMETER_EXTENSION,
 
     GetParameterRange = FF_GET_RANGE,
     GetParameterVisibility = FF_GET_PRAMETER_VISIBILITY,
@@ -74,6 +79,7 @@ impl Op {
                 | Op::SetTime
                 | Op::GetParameterEvents
                 | Op::SetParameter
+                | Op::SetParameterElementValue
                 | Op::GetParameterDisplay
                 | Op::GetParameterType
         )

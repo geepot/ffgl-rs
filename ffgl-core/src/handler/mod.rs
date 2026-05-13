@@ -32,6 +32,14 @@ pub trait FFGLInstance {
     fn get_param(&self, index: usize) -> f32;
     fn set_param(&mut self, index: usize, value: f32);
 
+    /// Per-element value setter, used by the host to push individual bins of a
+    /// [`crate::parameters::ParameterTypes::Buffer`] parameter — most commonly
+    /// FFT magnitudes when the param's `usage()` is
+    /// [`crate::parameters::ParameterUsages::FFT`]. Resolume calls this once
+    /// per bin per frame, so keep the implementation cheap. Default: drop the
+    /// element value (no-op). Override on plugins that expose Buffer params.
+    fn set_param_element(&mut self, _index: usize, _element: usize, _value: f32) {}
+
     ///Called by [crate::conversions::Op::ProcessOpenGL] to draw the plugin
     fn draw(&mut self, inst_data: &FFGLData, frame_data: GLInput);
 

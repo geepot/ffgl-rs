@@ -254,7 +254,31 @@ pub fn default_ffgl_entry<H: FFGLHandler + 'static>(
                 .into()
         }
 
+        // Resolume pushes per-bin values here (for `FF_TYPE_BUFFER` params with
+        // `FF_USAGE_FFT`, that's audio FFT magnitudes, one float per bin per
+        // frame). Forwarded to `FFGLInstance::set_param_element`.
+        Op::SetParameterElementValue => {
+            let input: &SetParameterElementValueStruct = unsafe { input_value.as_ref() };
+            let new_value = f32::from_bits(unsafe { input.NewParameterValue.UIntValue });
+            instance
+                .context(e!("No instance"))?
+                .renderer
+                .set_param_element(
+                    input.ParameterNumber as usize,
+                    input.ElementNumber as usize,
+                    new_value,
+                );
+            SuccessVal::Success.into()
+        }
+
+        Op::GetParameterUsage => param(handler, input_value).usage().into(),
+
         Op::GetNumElementSeparators => 0u32.into(),
+
+        Op::GetSeparatorElementIndex => 0u32.into(),
+
+        Op::GetNumFileParameterExtensions => 0u32.into(),
+        Op::GetFileParameterExtension => SuccessVal::Fail.into(),
 
         Op::GetInfo => INFO_STRUCT.get().context(e!("No info"))?.into(),
 

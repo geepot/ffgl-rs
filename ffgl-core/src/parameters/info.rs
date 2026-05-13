@@ -47,10 +47,17 @@ pub enum InputStatus {
 }
 
 #[repr(u32)]
-#[derive(Debug, Clone, Copy)]
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ParameterUsages {
+    #[default]
     Standard = FF_USAGE_STANDARD,
     FFT = FF_USAGE_FFT,
+}
+
+impl From<ParameterUsages> for FFGLVal {
+    fn from(value: ParameterUsages) -> Self {
+        FFGLVal { num: value as u32 }
+    }
 }
 
 #[repr(u64)]
@@ -133,6 +140,10 @@ pub struct SimpleParamInfo {
     pub group: Option<String>,
     pub display_name: Option<String>,
     pub elements: Option<Vec<(CString, f32)>>,
+    /// Indication of how the host should fill a [`ParameterTypes::Buffer`] —
+    /// most importantly [`ParameterUsages::FFT`], for which Resolume sends
+    /// per-bin audio FFT values via `FF_SET_PARAMETER_ELEMENT_VALUE`.
+    pub usage: Option<ParameterUsages>,
 }
 
 impl SimpleParamInfo {
@@ -141,6 +152,25 @@ impl SimpleParamInfo {
 
         SimpleParamInfo {
             name,
+            ..Default::default()
+        }
+    }
+
+    /// Build a [`ParameterTypes::Buffer`] parameter with `num_elements` bins
+    /// and [`ParameterUsages::FFT`] — the standard "give me audio FFT data"
+    /// declaration. Resolume responds by pushing one float per bin per frame
+    /// via the element-value op.
+    pub fn fft_buffer(name: &str, num_elements: usize) -> Self {
+        let cname = CString::new(name).unwrap();
+        SimpleParamInfo {
+            name: cname.clone(),
+            param_type: ParameterTypes::Buffer,
+            usage: Some(ParameterUsages::FFT),
+            elements: Some(
+                (0..num_elements)
+                    .map(|_| (cname.clone(), 0.0))
+                    .collect(),
+            ),
             ..Default::default()
         }
     }
@@ -159,6 +189,10 @@ impl ParamInfo for SimpleParamInfo {
 
     fn param_type(&self) -> ParameterTypes {
         self.param_type
+    }
+
+    fn usage(&self) -> ParameterUsages {
+        self.usage.unwrap_or_default()
     }
 
     fn min(&self) -> f32 {

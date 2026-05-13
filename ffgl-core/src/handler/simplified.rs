@@ -35,6 +35,9 @@ pub trait SimpleFFGLInstance: FFGLInstance + Send + Sync {
     fn set_param(&mut self, _index: usize, _value: f32) {
         panic!("No params")
     }
+    /// Override on plugins that expose [`crate::parameters::ParameterTypes::Buffer`]
+    /// params (e.g. FFT). Default: drop the value.
+    fn set_param_element(&mut self, _index: usize, _element: usize, _value: f32) {}
 
     ///Called by [crate::conversions::Op::ProcessOpenGL] to draw the plugin
     fn draw(&mut self, inst_data: &FFGLData, frame_data: GLInput);
@@ -52,6 +55,10 @@ impl<T: SimpleFFGLInstance> FFGLInstance for T {
 
     fn set_param(&mut self, index: usize, value: f32) {
         SimpleFFGLInstance::set_param(self, index, value)
+    }
+
+    fn set_param_element(&mut self, index: usize, element: usize, value: f32) {
+        SimpleFFGLInstance::set_param_element(self, index, element, value)
     }
 
     fn draw(&mut self, inst_data: &FFGLData, frame_data: GLInput) {
